@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-surface text-ink font-sans antialiased; overflow-x: hidden; }
+  h1, h2, h3, h4 { @apply font-bold tracking-tight text-ink; }
+  a, button, input, select, textarea { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2; }
+  img { @apply max-w-full; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+  .card { @apply rounded-xl border border-line bg-white shadow-card; }
+  .input { @apply block w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted transition focus:border-brand; }
+  .input-error { @apply border-sale; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-ink-soft; }
+  .link { @apply font-semibold text-brand underline-offset-2 hover:underline; }
+}
+
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.skeleton {
+  background: linear-gradient(90deg, #e8ecee 25%, #f3f5f6 37%, #e8ecee 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.toast-in { animation: toast-in 180ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .toast-in { animation: none; }
+  * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+}
