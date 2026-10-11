@@ -8,3 +8,11 @@ backend/uploads/*
 *.log
 .DS_Store
 coverage/
+
+# Terraform and Ansible local files
+/Terraform/
+/Ansible/
+*.pem
+*.tfstate
+*.tfstate.*
+**/.env
