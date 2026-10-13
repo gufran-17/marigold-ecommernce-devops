@@ -64,9 +64,20 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'docker compose up -d --build'
+                sh '''
+                    set -eu
+
+                    aws ecr get-login-password --region "$AWS_REGION" |
+                        docker login --username AWS --password-stdin "$ECR_REGISTRY"
+
+                    docker compose pull
+                    docker compose up -d
+
+                    docker logout "$ECR_REGISTRY"
+                '''
             }
         }
+        
     }
 
     post {

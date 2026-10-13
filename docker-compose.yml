@@ -9,7 +9,9 @@ services:
 
   
   backend:
-    build: ./backend
+    #build: ./backend
+  
+    image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/marigold-backend:latest
     container_name: marigold-backend
     env_file:
       - ./backend/.env
@@ -23,7 +25,8 @@ services:
   
 
   frontend:
-    build: ./frontend
+    #build: ./frontend
+    image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/marigold-frontend:latest
     container_name: marigold-frontend
     ports:
       - "5173:80"
