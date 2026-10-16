@@ -12,6 +12,7 @@ pipeline {
         AWS_REGION   = 'ap-south-1'
         ECR_REGISTRY = '062000001375.dkr.ecr.ap-south-1.amazonaws.com'
         NAMESPACE    = 'marigold'
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'
     }
 
     stages {
