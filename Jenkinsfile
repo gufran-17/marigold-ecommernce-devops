@@ -1,14 +1,21 @@
+```groovy
 
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
     environment {
-        AWS_REGION = 'ap-south-1'
-        AWS_ACCOUNT_ID = '062000001375'
+        AWS_REGION   = 'ap-south-1'
         ECR_REGISTRY = '062000001375.dkr.ecr.ap-south-1.amazonaws.com'
+        NAMESPACE    = 'marigold'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -32,32 +39,38 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'docker build -t marigold-backend ./backend'
-                sh 'docker build -t marigold-frontend ./frontend'
+                sh '''
+                    set -e
+
+                    docker build -t marigold-backend:$BUILD_NUMBER ./backend
+                    docker build -t marigold-frontend:$BUILD_NUMBER ./frontend
+                '''
             }
         }
 
         stage('Push to ECR') {
             steps {
                 sh '''
-                    set -eu
+                    set -e
 
                     aws ecr get-login-password --region "$AWS_REGION" |
                         docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-                    docker tag marigold-backend:latest "$ECR_REGISTRY/marigold-backend:latest"
-                    docker tag marigold-backend:latest "$ECR_REGISTRY/marigold-backend:build-$BUILD_NUMBER"
+                    docker tag marigold-backend:$BUILD_NUMBER \
+                        "$ECR_REGISTRY/marigold-backend:build-$BUILD_NUMBER"
+                    docker tag marigold-backend:$BUILD_NUMBER \
+                        "$ECR_REGISTRY/marigold-backend:latest"
 
-                    docker tag marigold-frontend:latest "$ECR_REGISTRY/marigold-frontend:latest"
-                    docker tag marigold-frontend:latest "$ECR_REGISTRY/marigold-frontend:build-$BUILD_NUMBER"
+                    docker tag marigold-frontend:$BUILD_NUMBER \
+                        "$ECR_REGISTRY/marigold-frontend:build-$BUILD_NUMBER"
+                    docker tag marigold-frontend:$BUILD_NUMBER \
+                        "$ECR_REGISTRY/marigold-frontend:latest"
 
-                    docker push "$ECR_REGISTRY/marigold-backend:latest"
                     docker push "$ECR_REGISTRY/marigold-backend:build-$BUILD_NUMBER"
+                    docker push "$ECR_REGISTRY/marigold-backend:latest"
 
-                    docker push "$ECR_REGISTRY/marigold-frontend:latest"
                     docker push "$ECR_REGISTRY/marigold-frontend:build-$BUILD_NUMBER"
-
-                    docker logout "$ECR_REGISTRY"
+                    docker push "$ECR_REGISTRY/marigold-frontend:latest"
                 '''
             }
         }
@@ -65,28 +78,38 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    set -eu
+                    set -e
 
-                    aws ecr get-login-password --region "$AWS_REGION" |
-                        docker login --username AWS --password-stdin "$ECR_REGISTRY"
+                    kubectl set image deployment/backend \
+                        backend="$ECR_REGISTRY/marigold-backend:build-$BUILD_NUMBER" \
+                        -n "$NAMESPACE"
 
-                    docker compose pull
-                    docker compose up -d
+                    kubectl set image deployment/frontend \
+                        frontend="$ECR_REGISTRY/marigold-frontend:build-$BUILD_NUMBER" \
+                        -n "$NAMESPACE"
 
-                    docker logout "$ECR_REGISTRY"
+                    kubectl rollout status deployment/backend \
+                        -n "$NAMESPACE" --timeout=180s
+
+                    kubectl rollout status deployment/frontend \
+                        -n "$NAMESPACE" --timeout=180s
                 '''
             }
         }
-        
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'SUCCESS: Tests, build, ECR push and Kubernetes deployment completed.'
         }
 
         failure {
-            echo 'Pipeline failed. Check the console output.'
+            echo 'FAILED: Check the first failed stage in Console Output.'
+        }
+
+        always {
+            sh 'docker logout "$ECR_REGISTRY" || true'
         }
     }
 }
+```
