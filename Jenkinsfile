@@ -50,14 +50,14 @@ pipeline {
         }
 
         
-stage('Trivy Image Scan') {
-    steps {
+        stage('Trivy Image Scan') {
+        steps {
         sh '''
             trivy image --severity HIGH,CRITICAL --exit-code 0 --ignore-unfixed marigold-backend:$BUILD_NUMBER
             trivy image --severity HIGH,CRITICAL --exit-code 0 --ignore-unfixed marigold-frontend:$BUILD_NUMBER
         '''
+        }
     }
-}
 
 
 
