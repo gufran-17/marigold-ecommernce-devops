@@ -49,6 +49,27 @@ pipeline {
             }
         }
 
+
+        stage('Trivy Image Scan') {
+            steps {
+            sh '''
+            set -e
+
+            trivy image \
+                --severity HIGH,CRITICAL \
+                --exit-code 1 \
+                --ignore-unfixed \
+                marigold-backend:$BUILD_NUMBER
+
+            trivy image \
+                --severity HIGH,CRITICAL \
+                --exit-code 1 \
+                --ignore-unfixed \
+                marigold-frontend:$BUILD_NUMBER
+                '''
+            }
+        }
+
         stage('Push to ECR') {
             steps {
                 sh '''
